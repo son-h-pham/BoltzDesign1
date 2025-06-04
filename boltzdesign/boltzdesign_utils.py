@@ -1196,6 +1196,7 @@ def run_boltz_design(
 
                     if loss_dir:
                         os.makedirs(loss_dir, exist_ok=True)
+                    '''    
                     # Plot loss history
                     try:
                         # Create figure with a dark background style
@@ -1241,7 +1242,7 @@ def run_boltz_design(
                     except Exception as e:
                         print(f"Error plotting loss history: {str(e)}")
                         continue
-
+                    '''
                     with open(rmsd_csv_path, 'a', newline='') as f:
                         writer = csv.writer(f)
                         if not csv_exists:
