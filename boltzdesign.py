@@ -200,6 +200,8 @@ Examples:
                         help='Number of design samples')
     parser.add_argument('--work_dir', type=str, default=None,
                         help='Working directory (default: current directory)')
+    parser.add_argument('--output_dir', type=str, default=None,
+                        help='Output directory')
     parser.add_argument('--high_iptm', type=str2bool, default=True,
                         help='Disable high iPTM designs')
     # Paths
@@ -681,12 +683,14 @@ def setup_pipeline_config(args):
 def setup_output_directories(args):
     """Setup output directories"""
     work_dir = args.work_dir or os.getcwd()
-    main_dir = f'{work_dir}/outputs'
+    output_dir = args.output_dir or work_dir
+    main_dir = os.path.join(output_dir, 'outputs')
     os.makedirs(main_dir, exist_ok=True)
     return {
         'main_dir': main_dir,
         'version': f'{args.target_type}_{args.target_name}_{args.suffix}'
     }
+    
 def modification_to_wt_aa(modifications, modifications_wt):
     """Convert modifications to WT AA"""
     if not modifications:
