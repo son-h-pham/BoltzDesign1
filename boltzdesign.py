@@ -596,7 +596,6 @@ def run_alphafold_step(args, ligandmpnn_dir, work_dir, mod_to_wt_aa):
 def run_boltz2_step(args, ligandmpnn_dir, work_dir):
     """Run Boltz-2 validation step"""
     print("Starting Boltz-2 validation step...")
-
     # Create AlphaFold directories
     boltz2_input_dir = f'{ligandmpnn_dir}/02_design_boltz2_yaml'
     boltz2_output_dir = f'{ligandmpnn_dir}/02_design_final_boltz2'
@@ -621,8 +620,12 @@ def run_boltz2_step(args, ligandmpnn_dir, work_dir):
                 # Add the new content
                 content += '\nproperties:\n    - affinity:\n        binder: B\n'
             
+            # Modify filename to add _boltz2 before .yaml
+            name_without_ext = filename.rsplit('.yaml', 1)[0]
+            new_filename = f"{name_without_ext}_boltz2.yaml"
+            
             # Copy the modified content to the boltz2_input_dir
-            output_filepath = os.path.join(boltz2_input_dir, filename)
+            output_filepath = os.path.join(boltz2_input_dir, new_filename)
             with open(output_filepath, 'w') as f:
                 f.write(content)
             
@@ -636,8 +639,9 @@ def run_boltz2_step(args, ligandmpnn_dir, work_dir):
                 apo_lines = lines[:6] + lines[10:]
                 apo_content = '\n'.join(apo_lines)
             
-            # Save apo version to the apo input directory
-            apo_output_filepath = os.path.join(boltz2_input_apo_dir, filename)
+            # Save apo version to the apo input directory (with _apo_boltz2 suffix)
+            apo_filename = f"{name_without_ext}_apo_boltz2.yaml"
+            apo_output_filepath = os.path.join(boltz2_input_apo_dir, apo_filename)
             with open(apo_output_filepath, 'w') as f:
                 f.write(apo_content)
                     
