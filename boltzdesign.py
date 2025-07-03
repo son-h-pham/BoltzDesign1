@@ -591,6 +591,70 @@ def run_alphafold_step(args, ligandmpnn_dir, work_dir, mod_to_wt_aa):
 
     return af_output_dir, af_output_apo_dir, af_pdb_dir, af_pdb_dir_apo
 
+def run_boltz2_step(args, ligandmpnn_dir, work_dir):
+    """Run Boltz-2 validation step"""
+    print("Starting Boltz-2 validation step...")
+
+    # Create AlphaFold directories
+    boltz2_input_dir = f'{ligandmpnn_dir}/02_design_boltz2_yaml'
+    boltz2_output_dir = f'{ligandmpnn_dir}/02_design_final_boltz2'
+    boltz2_input_apo_dir = f'{ligandmpnn_dir}/02_design_boltz2_apo_yaml'
+    boltz2_output_apo_dir = f'{ligandmpnn_dir}/02_design_boltz2_apo'
+    
+    for dir_path in [boltz2_input_dir, boltz2_output_dir, boltz2_input_apo_dir, boltz2_output_apo_dir]:
+        os.makedirs(dir_path, exist_ok=True)
+    
+    # Process YAML files
+    yaml_dir_success_boltz_yaml = os.path.join(ligandmpnn_dir, '01_lmpnn_redesigned_high_iptm', 'yaml')
+    
+    for filename in os.listdir(yaml_dir_success_boltz_yaml):
+        if filename.endswith('.yaml'):
+            filepath = os.path.join(yaml_dir_success_boltz_yaml, filename)
+            
+            with open(filepath, 'r') as f:
+                content = f.read()
+                
+            # Check if "properties" already exists
+            if 'properties:' not in content:
+                # Add the new content
+                content += '\nproperties:\n    - affinity:\n        binder: B\n'
+            
+            # Copy the modified content to the boltz2_input_dir
+            output_filepath = os.path.join(boltz2_input_dir, filename)
+            with open(output_filepath, 'w') as f:
+                f.write(content)
+            
+            # Create apo version by stripping lines 7-10 from the original content (no properties)
+            with open(filepath, 'r') as f:
+                apo_content = f.read()
+            
+            lines = apo_content.split('\n')
+            if 'ligand' in apo_content:
+                # Remove lines 7-10 (indices 6-9)
+                apo_lines = lines[:6] + lines[10:]
+                apo_content = '\n'.join(apo_lines)
+            
+            # Save apo version to the apo input directory
+            apo_output_filepath = os.path.join(boltz2_input_apo_dir, filename)
+            with open(apo_output_filepath, 'w') as f:
+                f.write(apo_content)
+                    
+    # Run Boltz-2 on holo state
+    subprocess.run([
+        'conda', 'run', '-n', 'boltz2', 'python', '-m', 'boltz predict',
+        boltz2_input_dir,
+        '--out_dir', boltz2_output_dir, '--write_full_pae'
+    ], check=True)
+    
+    # Run Boltz-2 on apo state
+    subprocess.run([
+        'conda', 'run', '-n', 'boltz2', 'python', '-m', 'boltz predict',
+        boltz2_input_apo_dir,
+        '--out_dir', boltz2_output_apo_dir, '--write_full_pae'
+    ], check=True)
+    
+    return af_output_dir, af_output_apo_dir, af_pdb_dir, af_pdb_dir_apo
+
 def run_rosetta_step(args, ligandmpnn_dir, af_output_dir, af_output_apo_dir, af_pdb_dir, af_pdb_dir_apo):
     """Run Rosetta energy calculation (protein targets only)"""
     if args.target_type != 'protein':
