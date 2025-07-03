@@ -482,7 +482,8 @@ def boltz_hallucination(
     chain_to_number=None,
     msa_max_seqs=4096,
     optimizer_type='SGD',
-    save_trajectory=False
+    save_trajectory=False,
+    noise_scaling=0.1,
 ):
 
     predict_args = {
@@ -571,8 +572,7 @@ def boltz_hallucination(
     ## initialize res_type_logits
     if pre_run:
         batch['res_type_logits'] = batch['res_type'].clone().detach().to(device).float()
-        batch['res_type_logits'][batch['entity_id']==chain_to_number[binder_chain],:] = torch.softmax(torch.distributions.Gumbel(0, 1).sample(batch['res_type'][batch['entity_id']==chain_to_number[binder_chain],:].shape).to(device) - torch.sum(torch.eye(batch['res_type'].shape[-1])[[0,1,6,22,23,24,25,26,27,28,29,30,31,32]],dim=0).to(device)*(1e10), dim=-1)
-
+        batch['res_type_logits'][batch['entity_id']==chain_to_number[binder_chain],:] = noise_scaling*torch.softmax(torch.distributions.Gumbel(0, 1).sample(batch['res_type'][batch['entity_id']==chain_to_number[binder_chain],:].shape).to(device) - torch.sum(torch.eye(batch['res_type'].shape[-1])[[0,1,6,22,23,24,25,26,27,28,29,30,31,32]],dim=0).to(device)*(1e10), dim=-1)
     else:
         batch['res_type_logits'] = torch.from_numpy(input_res_type).to(device)
 
@@ -842,7 +842,7 @@ def boltz_hallucination(
         return batch, plots, loss_history, i_con_loss_history, con_loss_history, plddt_loss_history, distogram_history, sequence_history, traj_coords_list, traj_plddt_list
 
     if pre_run:
-        batch, plots, loss_history, i_con_loss_history, con_loss_history,plddt_loss_history, distogram_history, sequence_history, traj_coords_list, traj_plddt_list = design(batch, iters=pre_iteration, soft=1.0, mask=mask, chain_mask=chain_mask, learning_rate=learning_rate, length=length, plots=plots, loss_history=loss_history, i_con_loss_history=i_con_loss_history, con_loss_history=con_loss_history, plddt_loss_history=plddt_loss_history, distogram_history=distogram_history, sequence_history=sequence_history, pre_run=pre_run, mask_ligand=mask_ligand, distogram_only=distogram_only, predict_args=predict_args, loss_scales=loss_scales, binder_chain=binder_chain, increasing_contact_over_itr=increasing_contact_over_itr, optimize_contact_per_binder_pos=optimize_contact_per_binder_pos, non_protein_target=non_protein_target, inter_chain_cutoff=inter_chain_cutoff, intra_chain_cutoff=intra_chain_cutoff, num_inter_contacts=num_inter_contacts, num_intra_contacts=num_intra_contacts, save_trajectory=save_trajectory)
+        batch, plots, loss_history, i_con_loss_history, con_loss_history,plddt_loss_history, distogram_history, sequence_history, traj_coords_list, traj_plddt_list = design(batch, iters=pre_iteration, soft=1.0, mask=mask, chain_mask=chain_mask, learning_rate=learning_rate_pre, length=length, plots=plots, loss_history=loss_history, i_con_loss_history=i_con_loss_history, con_loss_history=con_loss_history, plddt_loss_history=plddt_loss_history, distogram_history=distogram_history, sequence_history=sequence_history, pre_run=pre_run, mask_ligand=mask_ligand, distogram_only=distogram_only, predict_args=predict_args, loss_scales=loss_scales, binder_chain=binder_chain, increasing_contact_over_itr=increasing_contact_over_itr, optimize_contact_per_binder_pos=optimize_contact_per_binder_pos, non_protein_target=non_protein_target, inter_chain_cutoff=inter_chain_cutoff, intra_chain_cutoff=intra_chain_cutoff, num_inter_contacts=num_inter_contacts, num_intra_contacts=num_intra_contacts, save_trajectory=save_trajectory)
     else:
         if design_algorithm == "3stages":
             print('-'*100)
@@ -1130,6 +1130,7 @@ def run_boltz_design(
                 target_binder_input = yaml_path.stem
                 for itr in range(design_samples):
                     config['length'] = random.randint(config['length_min'],config['length_max'])
+                    filtered_config['length'] = config['length']
                     loss_scales['helix_loss'] = random.uniform(config['helix_loss_min'], config['helix_loss_max'])
 
                     print('pre-run warm up')

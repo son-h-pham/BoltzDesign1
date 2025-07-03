@@ -479,18 +479,18 @@ def measure_rosetta_energy(pdbs_path, pdbs_apo_path, save_dir, binder_holo_chain
                 row = filtered_df.iloc[i].copy()  # Create a copy to avoid SettingWithCopyWarning
                 cif_path = row['PDB'] + '/' + row['Model']
 
-                rg, length = radius_of_gyration(cif_path, chain_id='B')
+                rg, length = radius_of_gyration(cif_path, chain_id=binder_holo_chain)
                 
                 # Extract model name without relax_ prefix if present
                 model_base = row['Model'].split('relax_')[-1].split('_model.pdb')[0] if row['Model'].startswith('relax') else row['Model'].split('_model.pdb')[0]
                 
                 # Construct paths
-                base_path = '/'.join(row['PDB'].split('/')[:-1]) + '/design_final_af3/' + model_base
+                base_path = '/'.join(row['PDB'].split('/')[:-1]) + '/02_design_final_af3/' + model_base
                 confidenece_json_1 = f"{base_path}/{model_base}_summary_confidences.json"
                 confidenece_json_2 = f"{base_path}/{model_base}_confidences.json"
                 af_cif = f"{base_path}/{model_base}_model.cif"
                 
-                aa_seq = get_sequence(af_cif, chain_id='B')
+                aa_seq = get_sequence(af_cif, chain_id=binder_holo_chain)
                 
                 # Set PDB paths
                 if row['Model'].startswith('relax'):
@@ -558,4 +558,3 @@ def measure_rosetta_energy(pdbs_path, pdbs_apo_path, save_dir, binder_holo_chain
                 arcname = os.path.relpath(file_path, save_dir)
                 zipf.write(file_path, arcname)
     
-
