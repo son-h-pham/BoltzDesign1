@@ -228,9 +228,11 @@ Examples:
                         help='Run Boltz design step')
     parser.add_argument('--run_ligandmpnn', type=str2bool, default=True,
                         help='Run LigandMPNN redesign step')
-    parser.add_argument('--run_alphafold', type=str2bool, default=True,
+    parser.add_argument('--run_alphafold', type=str2bool, default=False,
                         help='Run AlphaFold validation step')
-    parser.add_argument('--run_rosetta', type=str2bool, default=True,
+    parser.add_argument('--run_boltz2', type=str2bool, default=True,
+                        help='Run Boltz2 validation step')
+    parser.add_argument('--run_rosetta', type=str2bool, default=False,
                         help='Run Rosetta energy calculation (protein targets only)')
     parser.add_argument('--redo_boltz_predict', type=str2bool, default=False,
                         help='Redo Boltz prediction')
@@ -653,7 +655,7 @@ def run_boltz2_step(args, ligandmpnn_dir, work_dir):
         '--out_dir', boltz2_output_apo_dir, '--write_full_pae'
     ], check=True)
     
-    return af_output_dir, af_output_apo_dir, af_pdb_dir, af_pdb_dir_apo
+    return boltz2_output_dir, boltz2_output_apo_dir
 
 def run_rosetta_step(args, ligandmpnn_dir, af_output_dir, af_output_apo_dir, af_pdb_dir, af_pdb_dir_apo):
     """Run Rosetta energy calculation (protein targets only)"""
@@ -804,6 +806,11 @@ def run_pipeline_steps(args, config, boltz_model, yaml_dir, output_dir):
         mod_to_wt_aa = modification_to_wt_aa(args.modifications, args.modifications_wt)
         results['af_output_dir'], results['af_output_apo_dir'], results['af_pdb_dir'], results['af_pdb_dir_apo'] = run_alphafold_step(
             args, results['ligandmpnn_dir'], args.work_dir or os.getcwd(), mod_to_wt_aa
+        )
+
+    if args.run_boltz2:        
+        results['boltz2_output_dir'], results['boltz2_output_apo_dir'] = run_boltz2_step(
+            args, results['ligandmpnn_dir'], args.work_dir or os.getcwd()
         )
     
     if args.run_rosetta:
