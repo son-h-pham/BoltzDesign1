@@ -647,14 +647,14 @@ def run_boltz2_step(args, ligandmpnn_dir, work_dir):
                     
     # Run Boltz-2 on holo state
     subprocess.run([
-        'conda', 'run', '-n', 'boltz2', 'python', '-m', 'boltz predict',
+        'conda', 'run', '-n', 'boltz2', 'boltz predict',
         boltz2_input_dir,
         '--out_dir', boltz2_output_dir, '--write_full_pae'
     ], check=True)
     
     # Run Boltz-2 on apo state
     subprocess.run([
-        'conda', 'run', '-n', 'boltz2', 'python', '-m', 'boltz predict',
+        'conda', 'run', '-n', 'boltz2', 'boltz predict',
         boltz2_input_apo_dir,
         '--out_dir', boltz2_output_apo_dir, '--write_full_pae'
     ], check=True)
